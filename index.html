@@ -22,8 +22,10 @@
         }
         .grid {
             position: relative;
-            width: 600px;
-            height: 600px;
+            width: 90vw;
+            max-width: 600px;
+            height: 90vw;
+            max-height: 600px;
             display: grid;
             grid-template-columns: repeat(12, 1fr);
             grid-template-rows: repeat(12, 1fr);
@@ -55,7 +57,7 @@
         }
         .label {
             position: absolute;
-            font-size: 14px;
+            font-size: 3vw;
             color: #333;
         }
         .x-axis, .y-axis {
@@ -83,6 +85,10 @@
         .rectangle-grid div {
             border: 1px solid red;
             box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5vw;
         }
         .clear-button {
             padding: 10px 20px;
@@ -114,81 +120,85 @@
             const clearButton = document.getElementById("clearButton");
             let startX, startY, endX, endY;
             let currentRectangle = null;
-    
+
+            const cellSize = grid.clientWidth / 12;
+
             // Add labels for x and y axes
             for (let i = 1; i <= 12; i++) {
                 const xLabel = document.createElement("div");
                 xLabel.className = "label";
-                xLabel.style.left = `${(i - 1) * 50 + 25}px`;
+                xLabel.style.left = `${(i - 1) * cellSize + cellSize / 2}px`;
                 xLabel.innerText = i;
                 xLabels.appendChild(xLabel);
-    
+
                 const yLabel = document.createElement("div");
                 yLabel.className = "label";
-                yLabel.style.top = `${(i - 1) * 50 + 25}px`;
+                yLabel.style.top = `${(i - 1) * cellSize + cellSize / 2}px`;
                 yLabel.innerText = i;
                 yLabels.appendChild(yLabel);
             }
-    
-            grid.addEventListener("click", (e) => {
-                if (currentRectangle) {
-                    return; // Do nothing if there's already a rectangle
-                }
-    
+
+            const handleDrawing = (clientX, clientY) => {
                 const rect = grid.getBoundingClientRect();
-                const x = Math.floor((e.clientX - rect.left) / 50) * 50;
-                const y = Math.floor((e.clientY - rect.top) / 50) * 50;
-    
+                const x = Math.floor((clientX - rect.left) / cellSize) * cellSize;
+                const y = Math.floor((clientY - rect.top) / cellSize) * cellSize;
+
                 const isOnXAxis = y === 0;
                 const isOnYAxis = x === 0;
-    
+
                 if (!isOnXAxis && !isOnYAxis) {
                     return; // Do nothing if the click is not on the axes
                 }
-    
+
                 if (startX === undefined && startY === undefined) {
                     startX = x;
                     startY = y;
-                    xAxis.style.left = `${startX + 25}px`;
-                    yAxis.style.top = `${startY + 25}px`;
+                    xAxis.style.left = `${startX + cellSize / 2}px`;
+                    yAxis.style.top = `${startY + cellSize / 2}px`;
                 } else {
                     endX = x;
                     endY = y;
-    
+
                     const left = Math.min(startX, endX);
                     const top = Math.min(startY, endY);
-                    const width = Math.abs(startX - endX) + 50;
-                    const height = Math.abs(startY - endY) + 50;
-    
+                    const width = Math.abs(startX - endX) + cellSize;
+                    const height = Math.abs(startY - endY) + cellSize;
+
                     currentRectangle = document.createElement("div");
                     currentRectangle.className = "rectangle-grid";
                     currentRectangle.style.left = `${left}px`;
                     currentRectangle.style.top = `${top}px`;
                     currentRectangle.style.width = `${width}px`;
                     currentRectangle.style.height = `${height}px`;
-    
+
                     // Create internal grid and add numbers
-                    const cols = width / 50;
-                    const rows = height / 50;
+                    const cols = width / cellSize;
+                    const rows = height / cellSize;
                     currentRectangle.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
                     currentRectangle.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
                     for (let i = 1; i <= cols * rows; i++) {
                         const cell = document.createElement("div");
-                        cell.style.display = "flex";
-                        cell.style.alignItems = "center";
-                        cell.style.justifyContent = "center";
                         cell.innerText = i;
                         currentRectangle.appendChild(cell);
                     }
                     grid.appendChild(currentRectangle);
-    
+
                     // Reset start and end coordinates
                     startX = startY = endX = endY = undefined;
                     xAxis.style.left = "-5px";
                     yAxis.style.top = "-5px";
                 }
+            };
+
+            grid.addEventListener("click", (e) => {
+                handleDrawing(e.clientX, e.clientY);
             });
-    
+
+            grid.addEventListener("touchstart", (e) => {
+                const touch = e.touches[0];
+                handleDrawing(touch.clientX, touch.clientY);
+            });
+
             clearButton.addEventListener("click", () => {
                 if (currentRectangle) {
                     currentRectangle.remove();
@@ -200,6 +210,5 @@
             });
         });
     </script>
-    
 </body>
 </html>
